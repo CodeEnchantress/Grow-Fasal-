@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# 🌱 Grow Fasal - Intelligent Farm Management
 
-## Getting Started
+**Grow Fasal** is a comprehensive, full-stack agricultural advisory system tailored for modern farmers. It transitions beyond simple short-term weather forecasting by providing long-term, structurally advanced climatic intelligence, localized accessibility, and proactive alerts.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🚀 Features Implemented to Date
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 1. Core Intelligence & Climatology Engine
+*   **Modular AI Engine**: Built the `ClimatologyEngine`, a core heuristic system capable of interpreting geolocation, cross-referencing it with seasonal Indian cycles (Rabi, Kharif, Zaid), and outputting long-term intelligent data.
+*   **6-Month Forecasting & Crop Suitability**: Recommends what crops to plant currently based on exact geography, and helps farmers plan land preparation for the upcoming seasons.
+*   **Actionable Advisory**: Generates highly structured reports detailing predictive Irrigation Strategies, Pesticide/Sowing Windows, and General Crop Care.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+### 2. Full-Stack Database & Authentication
+*   **Prisma ORM & SQLite**: Completely designed the database architecture (`schema.prisma`) mapping `Users`, `FarmProfiles`, and `Reports` for offline-ready, scalable local development.
+*   **NextAuth.js Integration**: Built a secure authentication portal (`/login`) enabling farmers to securely log into the system using their Phone Numbers.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 3. Farmer Dashboard & Historical Tracking
+*   **Protected Dashboard**: Created a secure `/dashboard` route accessible only to authenticated farmers.
+*   **Farm Profile Persistence**: Farmers can track their exact farm location, total acreage, current planted crops, and unique soil types continuously.
+*   **Cloud Report Saving**: Once a farmer generates an AI intelligence report, it is permanently saved to the SQLite database. The dashboard tracks the completely historical archive of all previously generated advice.
 
-## Learn More
+### 4. Immense Localization (22 Indian Languages)
+*   **Universal i18n Dictionary**: Built a custom translation `LanguageContext` containing exactly mapped interface strings for all **22 Scheduled Official Languages of India**, including:
+    *   *English, Hindi, Bengali, Telugu, Marathi, Tamil, Urdu, Gujarati, Kannada, Odia, Malayalam, Punjabi, Assamese, Maithili, Sanskrit, Nepali, Konkani, Manipuri, Bodo, Dogri, Santhali, and Kashmiri.*
+*   **Instant UI Toggle**: A globally available dropdown allows seamless, instant translation of the entire web application without breaking complex React Router state.
 
-To learn more about Next.js, take a look at the following resources:
+### 5. Native Accessibility (Voice & Audio)
+*   **Voice Dictation (Speech-to-Text)**: Replaced standard typing requirements with a Microphone button. Utilizing the browser's Native Web Speech API, farmers can simply speak the name of their village/city. The engine automatically maps the recognition language to their selected dialect (e.g., `mr-IN` for Marathi).
+*   **Read Aloud (Text-to-Speech)**: Addressing literacy barriers by adding a "Read Aloud" button directly to the complex farming reports. The application constructs a localized narrative of the 6-month forecast and verbally narrates it to the farmer.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 6. Proactive Twilio SMS Alerts
+*   **Automated Microservices**: Engineered a reliable `/api/alerts` backend route powered by the Twilio Node.js SDK.
+*   **Severe Weather Push**: Capable of directly texting farmers' mobile devices if extreme weather (heavy rain, sudden frost) is imminent, advising them to delay pesticide use or alter irrigation.
+*   **Simulated Testing Base**: Deployed a safe fallback system and a "Send Test Alert" mechanism inside the Dashboard. If Twilio credentials are not actively provided in the `.env.local`, the server safely captures and logs the simulated SMS payload, allowing perfect local testing.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🛠 Tech Stack
+*   **Frontend**: Next.js 14 (App Router), React, Vanilla CSS (Glassmorphism UI)
+*   **Backend**: Next.js Node.js API Routes, NextAuth.js
+*   **Database**: SQLite via Prisma ORM
+*   **Integrations**: Twilio SDK (SMS Alerts), Web Speech API (Voice/Audio)

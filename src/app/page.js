@@ -1,8 +1,10 @@
 "use client";
 import { useState } from 'react';
+import Link from 'next/link';
 import LocationInput from '../components/LocationInput';
 import WeatherWidget from '../components/WeatherWidget';
 import FarmingReport from '../components/FarmingReport';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 export default function Home() {
   const [weatherData, setWeatherData] = useState(null);
@@ -51,7 +53,11 @@ export default function Home() {
 
   return (
     <main className="container animate-fade-in">
-      <header style={{ textAlign: 'center', marginBottom: '4rem', paddingTop: '3rem' }}>
+      <header style={{ textAlign: 'center', marginBottom: '4rem', paddingTop: '3rem', position: 'relative' }}>
+        <div style={{ position: 'absolute', top: '1rem', right: '1rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <LanguageSwitcher />
+          <Link href="/dashboard" style={{ color: '#fff', background: 'var(--accent-blue)', padding: '8px 16px', borderRadius: '8px', textDecoration: 'none', fontWeight: 'bold' }}>Dashboard</Link>
+        </div>
         <h1 className="header-title">Grow Fasal</h1>
         <p className="header-subtitle">Intelligent Farm Management & Real-Time Weather Insights</p>
       </header>

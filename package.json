@@ -9,12 +9,17 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@prisma/client": "^5.22.0",
     "next": "14.2.15",
+    "next-auth": "^4.24.13",
+    "next-intl": "^4.8.3",
     "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "react-dom": "18.3.1",
+    "twilio": "^5.13.0"
   },
   "devDependencies": {
     "eslint": "^8",
-    "eslint-config-next": "14.2.15"
+    "eslint-config-next": "14.2.15",
+    "prisma": "^5.22.0"
   }
 }

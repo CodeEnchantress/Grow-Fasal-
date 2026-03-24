@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { ClimatologyEngine } from '../../../engine/ClimatologyEngine';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../auth/[...nextauth]/route";
+import { prisma } from "../../../lib/prisma";
 
 export async function POST(request) {
   try {
@@ -16,6 +19,28 @@ export async function POST(request) {
     
     // Generate the comprehensive region-aware, seasonal 6-month report
     const report = engine.generateReport(location, current || {});
+
+    // Save report to DB if user is logged in
+    const session = await getServerSession(authOptions);
+    if (session?.user?.id) {
+      await prisma.report.create({
+        data: {
+          userId: session.user.id,
+          location: location,
+          content: JSON.stringify(report)
+        }
+      });
+      
+      // Upsert Farm Profile with location if not exists
+      await prisma.farmProfile.upsert({
+        where: { userId: session.user.id },
+        update: {}, // Don't overwrite existing profile data on every report
+        create: {
+          userId: session.user.id,
+          location: location
+        }
+      });
+    }
 
     return NextResponse.json(report);
 
