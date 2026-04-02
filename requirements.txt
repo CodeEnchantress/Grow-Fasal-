@@ -1,0 +1,14 @@
+flask
+flask-sqlalchemy
+flask-login
+requests
+pandas
+numpy
+scikit-learn
+xgboost
+prophet
+tensorflow
+joblib
+plotly
+python-dotenv
+bcrypt
