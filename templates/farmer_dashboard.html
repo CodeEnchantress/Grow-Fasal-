@@ -1,0 +1,51 @@
+{% extends "layout.html" %}
+{% block title %}Farmer Dashboard | Grow Fasal{% endblock %}
+{% block page_title %}My Dashboard{% endblock %}
+
+{% block content %}
+<div class="cockpit-card" style="margin-bottom: 2rem; padding: 2rem; text-align: center; background: linear-gradient(135deg, #166534 0%, #15803d 100%); color: white;">
+    <h2 style="font-size: 2rem; margin: 0 0 1rem 0;">Ready to check on your farm?</h2>
+    <p style="font-size: 1.1rem; opacity: 0.9; max-width: 600px; margin: 0 auto;">
+        Welcome back, {{ current_user.name }}! Use the quick links below to manage your crops, check local mandi prices, and view your seasonal weather forecast.
+    </p>
+</div>
+
+<div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); gap: 2rem;">
+    <!-- My Crops Overview -->
+    <a href="{{ url_for('my_crops') }}" style="text-decoration: none; color: inherit;">
+        <div class="stat-card" style="transition: transform 0.2s; cursor: pointer; height: 100%; border-top: 4px solid #16a34a;">
+            <div class="stat-label">ACTIVE CROPS</div>
+            <div class="stat-value" style="font-size: 2.5rem; color: #166534; margin: 1rem 0;">{{ active_count }}</div>
+            <div class="stat-trend trend-up">Manage Sowing & Harvesting</div>
+            <p style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 1rem;">Click to get AI crop advice for your soil and manage your current harvest.</p>
+        </div>
+    </a>
+
+    <!-- Weather Overview -->
+    <a href="{{ url_for('weather') }}" style="text-decoration: none; color: inherit;">
+        <div class="stat-card" style="transition: transform 0.2s; cursor: pointer; height: 100%; border-top: 4px solid #0ea5e9;">
+            <div class="stat-label">WEATHER OUTLOOK</div>
+            <div class="stat-value" style="font-size: 2.5rem; margin: 1rem 0; color: #0ea5e9; font-weight: 800;">View</div>
+            <div class="stat-trend" style="color: #0284c7;">6-Month Seasonal Forecast</div>
+            <p style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 1rem;">Plan ahead! View temperature and rainfall trends powered by Open-Meteo.</p>
+        </div>
+    </a>
+
+    <!-- Mandi Trends Overview -->
+    <a href="{{ url_for('mandi_trends') }}" style="text-decoration: none; color: inherit;">
+        <div class="stat-card" style="transition: transform 0.2s; cursor: pointer; height: 100%; border-top: 4px solid #f59e0b;">
+            <div class="stat-label">MARKET TRENDS</div>
+            <div class="stat-value" style="font-size: 2.5rem; margin: 1rem 0; color: #f59e0b; font-weight: 800;">Check</div>
+            <div class="stat-trend" style="color: #d97706;">Live Mandi Prices for {{ current_user.state }}</div>
+            <p style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 1rem;">Track current prices and historical trends to sell your harvest profitably.</p>
+        </div>
+    </a>
+</div>
+
+<style>
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
+</style>
+{% endblock %}

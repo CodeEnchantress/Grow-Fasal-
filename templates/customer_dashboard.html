@@ -1,0 +1,91 @@
+{% extends "layout.html" %}
+{% block title %}Buyer Marketplace | Grow Fasal System{% endblock %}
+{% block page_title %}Bulk Buyer Marketplace{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Active Listing Units</div>
+        <div class="stat-value">54+</div>
+        <div class="stat-trend" style="color: var(--accent-primary);">Verified Producer Lots</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">System High Grade (%)</div>
+        <div class="stat-value">84.2%</div>
+        <div class="stat-trend" style="color: var(--accent-primary);">A Grade (Verified)</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Mandi Average Index</div>
+        <div class="stat-value">₹ 2,420</div>
+        <div class="stat-trend" style="color: var(--text-secondary);">Real-time Avg. (Agmarknet)</div>
+    </div>
+</div>
+
+<div class="cockpit-card">
+    <div class="card-header">🛒 VERIFIED PRODUCER LISTINGS (REAL-TIME)</div>
+    <div class="card-body" style="padding: 0;">
+        <table class="dense-table">
+            <thead>
+                <tr>
+                    <th>PRODUCER ID</th>
+                    <th>COMMODITY</th>
+                    <th>TOTAL QTY (KG)</th>
+                    <th>VERIFIED QUALITY</th>
+                    <th>PRICE (MODAL)</th>
+                    <th>ACTION</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                    <tr>
+                        <td>{{ product.farmer_id[:8] }}</td>
+                        <td style="font-weight: 700;">{{ product.name }}</td>
+                        <td>{{ product.quantity_available }} kg</td>
+                        <td><span class="badge badge-success" style="font-size: 1rem; border: 1px solid green;">{{ product.quality_grade }}</span></td>
+                        <td><b>₹ {{ product.price_per_kg }}/kg</b></td>
+                        <td>
+                            <button class="btn btn-outline" style="padding: 0.25rem 0.75rem;">View growth history</button>
+                            <button class="btn btn-primary" style="padding: 0.25rem 0.75rem; margin-left: 0.5rem;">Purchase Bulk</button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="cockpit-card" style="margin-top: 2rem;">
+    <div class="card-header">📈 AGMARKNET LIVE PRICE INDEX</div>
+    <div class="card-body">
+        <p style="font-size: 0.8125rem; color: var(--text-secondary);">Compare producer prices with official government Mandi rates (Agmarknet).</p>
+        <div id="mandi-comparison-plot" style="height: 300px;"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize Mandi Comparison Plot
+    var trace1 = {
+        x: ['Rice', 'Maize', 'Cotton', 'Wheat', 'Sugarcane'],
+        y: [2200, 1800, 5400, 2100, 3500],
+        name: 'Mandi Modal Price',
+        type: 'bar',
+        marker: {color: '#94a3b8'}
+    };
+    var trace2 = {
+        x: ['Rice', 'Maize', 'Cotton', 'Wheat', 'Sugarcane'],
+        y: [2350, 1950, 5600, 2250, 3800],
+        name: 'Producer Verified Avg.',
+        type: 'bar',
+        marker: {color: '#10b981'}
+    };
+    var plotData = [trace1, trace2];
+    var layout = {
+        barmode: 'group',
+        margin: { t: 20, b: 40, l: 40, r: 20 },
+        font: { family: 'Inter' }
+    };
+    Plotly.newPlot('mandi-comparison-plot', plotData, layout);
+</script>
+{% endblock %}

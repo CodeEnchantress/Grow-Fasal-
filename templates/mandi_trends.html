@@ -1,0 +1,120 @@
+{% extends "layout.html" %}
+{% block title %}Mandi Trends | Grow Fasal{% endblock %}
+{% block page_title %}Mandi Trends & Analysis{% endblock %}
+
+{% block content %}
+<div class="row" style="display: flex; gap: 2rem; flex-wrap: wrap;">
+    <!-- LEFT PANEL: Dynamic Nearest Mandi Tool -->
+    <div class="cockpit-card" style="flex: 1; min-width: 350px;">
+        <div class="card-header">NEAREST MARKETS (GPS LIVE)</div>
+        <div class="card-body">
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.9rem;">
+                Looking for the best place to sell? Use your phone's GPS to calculate the straight-line distance to the 3 closest wholesale markets buying your crop today.
+            </p>
+            
+            <div style="margin-bottom: 1rem;">
+                <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary);">WHAT ARE YOU SELLING?</label>
+                <div style="display: flex; gap: 1rem; align-items: center; margin-top: 5px;">
+                    <input type="text" id="target-commodity" value="{{ target_commodity or 'Wheat' }}" style="padding: 0.6rem; border: 1px solid var(--border-color); border-radius: 6px; width: 60%; font-size: 1rem;">
+                    <button class="btn btn-primary" onclick="findNearestMandis()" style="padding: 0.6rem 1rem;">Scan Nearest Markets</button>
+                </div>
+            </div>
+
+            <div id="nearest-results" style="margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                <span class="badge badge-success" style="opacity: 0.5;">Awaiting GPS Scan...</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- RIGHT PANEL: Projected Price Trend -->
+    <div class="cockpit-card" style="flex: 2; min-width: 450px;">
+        <div class="card-header">EXPECTED PRICE TRENDS (NEXT 12 WEEKS)</div>
+        <div class="card-body">
+            <div id="price-plot" style="height: 300px;"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+    // Initialize Plotly Price Graph
+    var plotData = [{
+        x: ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8', 'W9', 'W10', 'W11', 'W12'],
+        y: [2100, 2150, 2120, 2200, 2250, 2300, 2280, 2350, 2400, 2450, 2420, 2500],
+        type: 'scatter',
+        mode: 'lines+markers',
+        line: {color: '#16a34a', width: 3},
+        marker: {color: '#15803d', size: 8}
+    }];
+    var layout = {
+        margin: { t: 10, b: 30, l: 40, r: 10 },
+        height: 300,
+        font: { size: 12, family: 'Inter' },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)'
+    };
+    Plotly.newPlot('price-plot', plotData, layout, {responsive: true});
+
+    // Haversine Nearest Mandi Logic
+    function findNearestMandis() {
+        const commInput = document.getElementById('target-commodity').value;
+        const resBox = document.getElementById('nearest-results');
+        
+        resBox.innerHTML = '<span class="badge badge-warning">Acquiring GPS Satellite Lock...</span>';
+        
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(async function(position) {
+                resBox.innerHTML = '<span class="badge badge-warning">Calculating Distance Vectors...</span>';
+                
+                try {
+                    const response = await fetch('/api/mandi/nearest', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            lat: position.coords.latitude, 
+                            lon: position.coords.longitude,
+                            commodity: commInput
+                        })
+                    });
+                    const data = await response.json();
+                    
+                    if(data.status === 'success') {
+                        let html = '';
+                        data.markets.forEach((m, index) => {
+                            html += `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: #fff;">
+                                <div>
+                                    <div style="font-weight: 700; font-size: 1.05rem; color: var(--text-primary);">${index+1}. ${m.mandi}</div>
+                                    <div style="font-size: 0.8rem; color: #f59e0b; font-weight: 600;">Distance: ${m.distance_km} km</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="color: var(--accent-secondary); font-weight: 800; font-size: 1.2rem;">₹${m.modal_price}</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-secondary);">per quintal</div>
+                                </div>
+                            </div>
+                            `;
+                        });
+                        resBox.innerHTML = html;
+                    } else {
+                        resBox.innerHTML = '<span class="badge badge-danger">Engine Error</span>';
+                    }
+                } catch(e) {
+                    resBox.innerHTML = '<span class="badge badge-danger">Connection Error</span>';
+                }
+            }, function(geoError) {
+                resBox.innerHTML = '<span class="badge badge-danger">GPS Access Denied or Unavailable</span>';
+            });
+        }
+    }
+
+    // Auto-run if teleported from My Crops
+    document.addEventListener("DOMContentLoaded", function() {
+        const target = "{{ target_commodity }}";
+        if (target && target.trim() !== '') {
+            findNearestMandis();
+        }
+    });
+</script>
+{% endblock %}
