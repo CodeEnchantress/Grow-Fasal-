@@ -1,0 +1,321 @@
+{% extends "layout.html" %}
+{% block title %}My Crops | Grow Fasal{% endblock %}
+{% block page_title %}🌱 My Production Pipeline{% endblock %}
+
+{% block content %}
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Total Active Crops</div>
+        <div class="stat-value" style="color: var(--green-700);">{{ crops|length }}</div>
+        <div class="stat-trend trend-up">↑ Productive Cycles</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Harvest Ready</div>
+        <div class="stat-value" style="color: var(--amber-600);">
+            {{ crops|selectattr('status', 'equalto', 'Harvest Ready')|list|length }}
+        </div>
+        <div class="stat-trend trend-up">Ready for Marketplace</div>
+    </div>
+</div>
+
+<div class="crops-container">
+    <div class="crops-header">
+        <h2>Active Cultivation</h2>
+        <div class="header-actions">
+            <button class="btn btn-primary" onclick="document.getElementById('sow-panel').scrollIntoView({behavior:'smooth'})">
+                + Start New Crop
+            </button>
+        </div>
+    </div>
+
+    <div class="crops-grid">
+        {% for crop in crops %}
+        <div class="crop-card">
+            <div class="crop-card-header">
+                <div class="crop-info">
+                    <span class="crop-emoji" style="font-size: 2rem;">
+                        {% set emojis = {'Rice':'🌾', 'Wheat':'🌿', 'Maize':'🌽', 'Cotton':'🌸', 'Sugarcane':'🎋', 'Tomato':'🍅'} %}
+                        {{ emojis.get(crop.crop_name, '🌱') }}
+                    </span>
+                    <div>
+                        <div class="crop-name">{{ crop.crop_name }}</div>
+                        <div class="crop-meta">Sown: {{ crop.sown_date.strftime('%d %b %Y') }}</div>
+                    </div>
+                </div>
+                <div class="crop-status-badge {{ crop.status.lower().replace(' ', '-') }}">
+                    {{ crop.status }}
+                </div>
+            </div>
+
+            <div class="crop-progress">
+                <div class="progress-info">
+                    <span>Growth Progress</span>
+                    <span>{{ crop.growth_progress | int }}%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill"style="width: {{ crop.growth_progress | int }}%; background-color: {{ 'var(--amber-500)' if crop.status == 'Harvest Ready' else 'var(--green-700)' }};">
+</div>
+                </div>
+            </div>
+
+            <div class="crop-details-row">
+                <div class="detail-item">
+                    <div class="detail-label">Health Score</div>
+                    <div class="detail-value" style="color: var(--green-700);">{{ crop.health_score | int }}%</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Quality Grade</div>
+                    <div class="detail-value">
+                        <span class="badge badge-grade-{{ crop.quality_grade }}">Grade {{ crop.quality_grade }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="crop-actions">
+                {% if crop.status == 'Harvest Ready' %}
+                <button class="btn btn-amber btn-sm btn-full" onclick="openListModal('{{ crop.id }}', '{{ crop.crop_name }}', '{{ crop.quality_grade }}')">
+                    🚀 List to Market
+                </button>
+                {% else %}
+                <button class="btn btn-outline btn-sm" style="flex: 1;">Check Health</button>
+                <button class="btn btn-outline btn-sm" style="flex: 1;">Get Advice</button>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Manual Sow Panel -->
+    <div id="sow-panel" class="manual-sow-panel" style="margin-top: 3rem; background: #fff; padding: 2rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-md);">
+        <h3 style="margin-bottom: 1rem;">Manual Sow Option</h3>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">If GPS is unavailable, use this panel to manually start a crop cycle on your farm profile.</p>
+        
+        <div style="display: flex; gap: 1rem; align-items: flex-end;">
+            <div class="form-group" style="flex: 2;">
+                <label class="form-label">Select Crop to Plant</label>
+                <select class="form-input" id="manual-crop-select">
+                    <option value="Rice">Rice</option>
+                    <option value="Wheat">Wheat</option>
+                    <option value="Maize">Maize</option>
+                    <option value="Cotton">Cotton</option>
+                    <option value="Sugarcane">Sugarcane</option>
+                    <option value="Tomato">Tomato</option>
+                    <option value="Potato">Potato</option>
+                </select>
+            </div>
+            <div style="flex: 1;">
+                <button class="btn btn-primary btn-full" onclick="manualSow()">Start Growing</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- List to Market Modal (The new functionality) -->
+<div class="modal-overlay" id="list-modal-overlay" onclick="overlayClose(event, 'list-modal-overlay')">
+    <div class="modal" style="max-width: 500px;">
+        <button class="modal-close" onclick="closeListModal()">&#x2715;</button>
+        <div class="modal-title">🚀 List to Marketplace</div>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">AI & Mandi-backed price analysis for your <span id="list-crop-name" style="font-weight:700; color:var(--green-700);"></span>.</p>
+        
+        <!-- Loading State -->
+        <div id="list-loading" style="text-align:center; padding: 2rem;">
+            <div style="font-size: 2rem; animation: spin 1s linear infinite;">⏳</div>
+            <p>Analyzing nearby Mandi prices...</p>
+        </div>
+
+        <!-- Content State -->
+        <div id="list-content" style="display:none;">
+            <div style="background: var(--slate-50); padding: 1.25rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <div style="display:flex; justify-content:space-between; margin-bottom: 0.75rem;">
+                    <span style="font-size: 0.85rem; color: var(--text-secondary);">Nearby Mandi Price (<span id="mandi-loc"></span>):</span>
+                    <span style="font-weight: 700; color: var(--slate-900);">&#8377;<span id="mandi-price">0</span>/kg</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; padding-top: 0.75rem; border-top: 1px dashed var(--slate-200);">
+                    <span style="font-size: 0.85rem; color: var(--green-700); font-weight: 700;">AI Recommended Price:</span>
+                    <span style="font-weight: 800; color: var(--green-700); font-size: 1.1rem;">&#8377;<span id="ml-price">0</span>/kg</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Your Selling Price (&#8377; per kg)</label>
+                <input type="number" class="form-input" id="selling-price" placeholder="Enter your price">
+                <small style="color: var(--text-muted); display: block; margin-top: 0.5rem;">
+                    Platform Price Barrier: Max &#8377;<span id="price-cap">0</span>/kg
+                </small>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Estimated Quantity (kg)</label>
+                <input type="number" class="form-input" id="listing-qty" value="100">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Crop Image (Optional)</label>
+                <input type="file" class="form-input" id="crop-image" accept="image/*">
+                <small style="color: var(--text-muted); display: block; margin-top: 0.5rem;">
+                    Upload a picture of your crop to attract more buyers.
+                </small>
+            </div>
+
+            <button class="btn btn-primary btn-lg btn-full" onclick="confirmListing()">
+                ✅ Add to Marketplace
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+var currentListingCropId = null;
+var currentListingCropName = null;
+var platformPriceCap = 0;
+
+function openListModal(cropId, cropName, grade) {
+    currentListingCropId = cropId;
+    currentListingCropName = cropName;
+    document.getElementById('list-crop-name').textContent = cropName;
+    document.getElementById('list-modal-overlay').classList.add('open');
+    document.getElementById('list-loading').style.display = 'block';
+    document.getElementById('list-content').style.display = 'none';
+
+    fetch('/api/get-price-recommendation', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({crop_name: cropName, grade: grade})
+    })
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('list-loading').style.display = 'none';
+        document.getElementById('list-content').style.display = 'block';
+        
+        document.getElementById('mandi-price').textContent = data.mandi_price;
+        document.getElementById('mandi-loc').textContent = data.location;
+        document.getElementById('ml-price').textContent = data.ml_recommended;
+        document.getElementById('price-cap').textContent = data.platform_cap;
+        document.getElementById('selling-price').value = data.ml_recommended;
+        platformPriceCap = data.platform_cap;
+    })
+    .catch(() => {
+        showToast('Error fetching market data', 'error');
+        closeListModal();
+    });
+}
+
+function closeListModal() {
+    document.getElementById('list-modal-overlay').classList.remove('open');
+}
+
+function confirmListing() {
+    var price = parseFloat(document.getElementById('selling-price').value);
+    var qty = parseFloat(document.getElementById('listing-qty').value);
+    var imageFile = document.getElementById('crop-image').files[0];
+
+    if (price > platformPriceCap) {
+        showToast('Price exceeds platform barrier for this grade!', 'error');
+        return;
+    }
+
+    if (!price || !qty) {
+        showToast('Please fill all fields', 'error');
+        return;
+    }
+
+    var formData = new FormData();
+    formData.append('selling_price', price);
+    formData.append('quantity', qty);
+    if (imageFile) {
+        formData.append('crop_image', imageFile);
+    }
+
+    fetch(`/api/harvest/${currentListingCropId}`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showToast('Listing successfully added to Market!', 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showToast(data.message || 'Error adding listing', 'error');
+        }
+    })
+    .catch(err => {
+        showToast('Network error while saving listing', 'error');
+    });
+}
+
+function manualSow() {
+    const crop = document.getElementById('manual-crop-select').value;
+    if (!confirm(`Confirm sowing ${crop} on your farm?`)) return;
+
+    fetch('/api/sow-manual', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({crop_name: crop})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showToast('Crop sown successfully!');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showToast(data.message, 'error');
+        }
+    });
+}
+
+function showToast(msg, type='success') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'toast' + (type === 'error' ? ' toast-error' : '');
+    toast.textContent = (type === 'error' ? '❌' : '✅') + ' ' + msg;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+}
+
+function overlayClose(event, id) {
+    if (event.target === event.currentTarget) {
+        document.getElementById(id).classList.remove('open');
+    }
+}
+</script>
+
+<style>
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.badge-grade-A { background: #fef3c7; color: #92400e; border: 1px solid #f59e0b; }
+.badge-grade-B { background: #ecfdf5; color: #065f46; border: 1px solid #10b981; }
+.badge-grade-C { background: #eff6ff; color: #1e40af; border: 1px solid #3b82f6; }
+.badge-grade-D { background: #f3f4f6; color: #374151; border: 1px solid #9ca3af; }
+
+/* My Crops Specific Styles */
+.crops-container { max-width: 1200px; margin: 0 auto; }
+.crops-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+.crops-header h2 { font-family: 'Outfit', sans-serif; font-size: 1.6rem; color: var(--green-900); }
+.crops-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
+.crop-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.5rem; box-shadow: var(--shadow-sm); transition: all var(--transition); display: flex; flex-direction: column; gap: 1.25rem; }
+.crop-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--green-200); }
+.crop-card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+.crop-info { display: flex; gap: 1rem; align-items: center; }
+.crop-emoji { width: 52px; height: 52px; background: var(--green-50); border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+.crop-name { font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 700; color: var(--green-900); }
+.crop-meta { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem; }
+.crop-status-badge { padding: 0.35rem 0.85rem; border-radius: 100px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
+.growing { background: #dbeafe; color: #1e40af; }
+.harvest-ready { background: #dcfce7; color: #166534; box-shadow: 0 0 0 2px rgba(34,197,94,0.2); }
+.vegetative { background: #fef3c7; color: #92400e; }
+.progress-info { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.6rem; }
+.progress-bar { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 4px; transition: width 1s ease-in-out; }
+.crop-details-row { display: flex; justify-content: space-between; border-top: 1px dashed var(--border-color); border-bottom: 1px dashed var(--border-color); padding: 1.25rem 0; }
+.detail-item { display: flex; flex-direction: column; gap: 0.4rem; }
+.detail-label { font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+.detail-value { font-size: 1.1rem; font-weight: 800; color: var(--slate-900); }
+.crop-actions { display: flex; gap: 0.75rem; margin-top: auto; }
+</style>
+{% endblock %}

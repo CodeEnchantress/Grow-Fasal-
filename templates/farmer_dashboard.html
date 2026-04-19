@@ -1,0 +1,208 @@
+{% extends "layout.html" %}
+{% block title %}Farmer Dashboard | Grow Fasal{% endblock %}
+{% block page_title %}My Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- Welcome Hero -->
+<div class="hero-banner" style="background: linear-gradient(135deg, #14532d 0%, #166534 50%, #15803d 100%);">
+    <h2>Welcome back, {{ current_user.name }}! 🌾</h2>
+    <p>Your farm intelligence hub. Track crops, monitor sales, and manage your marketplace listings — all in one place.</p>
+</div>
+
+<!-- KPI Stats -->
+<div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+    <a href="{{ url_for('my_crops') }}" style="text-decoration:none;color:inherit;">
+        <div class="stat-card" style="border-top: 4px solid var(--green-500); cursor:pointer;">
+            <div class="stat-label">Active Crops</div>
+            <div class="stat-value" style="color:var(--green-700);">{{ active_count }}</div>
+            <div class="stat-trend trend-up">↗ Manage Harvest</div>
+        </div>
+    </a>
+    <div class="stat-card" style="border-top: 4px solid var(--amber-500);">
+        <div class="stat-label">Listed Products</div>
+        <div class="stat-value" style="color:var(--amber-600);">{{ listed_products_count }}</div>
+        <div class="stat-trend" style="color:var(--amber-600);">On Marketplace</div>
+    </div>
+    <div class="stat-card" style="border-top: 4px solid var(--blue-500);">
+        <div class="stat-label">Total Orders</div>
+        <div class="stat-value" style="color:var(--blue-600);">{{ recent_orders|length }}</div>
+        <div class="stat-trend" style="color:var(--blue-600);">Customer Purchases</div>
+    </div>
+    <div class="stat-card" style="border-top: 4px solid #a855f7;">
+        <div class="stat-label">Total Revenue</div>
+        <div class="stat-value" style="color:#a855f7;">₹{{ '{:,.0f}'.format(total_revenue) }}</div>
+        <div class="stat-trend" style="color:#a855f7;">💰 Lifetime Sales</div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div style="display:grid; grid-template-columns: repeat(3,1fr); gap:1.5rem; margin-bottom:2rem;">
+    <a href="{{ url_for('my_crops') }}" style="text-decoration:none;">
+        <div class="cockpit-card" style="cursor:pointer; transition:all .2s; border-top: 3px solid var(--green-500);">
+            <div class="card-body" style="text-align:center; padding:1.75rem;">
+                <div style="font-size:2.5rem; margin-bottom:.75rem;">🌱</div>
+                <div style="font-weight:700; font-size:1rem; color:var(--green-800);">My Crops</div>
+                <div class="text-muted" style="margin-top:.3rem;">Sow, track & harvest</div>
+            </div>
+        </div>
+    </a>
+    <a href="{{ url_for('weather') }}" style="text-decoration:none;">
+        <div class="cockpit-card" style="cursor:pointer; transition:all .2s; border-top: 3px solid var(--blue-500);">
+            <div class="card-body" style="text-align:center; padding:1.75rem;">
+                <div style="font-size:2.5rem; margin-bottom:.75rem;">⛅</div>
+                <div style="font-weight:700; font-size:1rem; color:var(--green-800);">Weather Intel</div>
+                <div class="text-muted" style="margin-top:.3rem;">6-Month Forecast</div>
+            </div>
+        </div>
+    </a>
+    <a href="{{ url_for('mandi_trends') }}" style="text-decoration:none;">
+        <div class="cockpit-card" style="cursor:pointer; transition:all .2s; border-top: 3px solid var(--amber-500);">
+            <div class="card-body" style="text-align:center; padding:1.75rem;">
+                <div style="font-size:2.5rem; margin-bottom:.75rem;">📈</div>
+                <div style="font-weight:700; font-size:1rem; color:var(--green-800);">Mandi Trends</div>
+                <div class="text-muted" style="margin-top:.3rem;">Live Prices</div>
+            </div>
+        </div>
+    </a>
+</div>
+
+<!-- My Listings -->
+{% if farmer_products %}
+<div class="cockpit-card">
+    <div class="card-header">
+        🏪 My Marketplace Listings
+        <span class="badge badge-success">{{ farmer_products|length }} Active</span>
+    </div>
+    <div class="card-body" style="padding:0;">
+        <table class="dense-table">
+            <thead>
+                <tr>
+                    <th>Commodity</th>
+                    <th>Grade</th>
+                    <th>Stock Left</th>
+                    <th>Price/kg</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in farmer_products %}
+                <tr>
+                    <td style="font-weight:700;">{{ p.name }}</td>
+                    <td><span class="badge badge-grade-{{ p.quality_grade }}">Grade {{ p.quality_grade }}</span></td>
+                    <td>{{ p.quantity_available | int }} kg</td>
+                    <td><b>₹{{ p.price_per_kg }}/kg</b></td>
+                    <td>
+                        {% if p.quantity_available > 0 %}
+                            <span class="badge badge-success">● Live</span>
+                        {% else %}
+                            <span class="badge badge-warning">Sold Out</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Orders from Customers -->
+{% if recent_orders %}
+<div class="cockpit-card">
+    <div class="card-header">
+        🧾 Recent Customer Orders
+        <a href="#" style="font-size:.8rem;color:var(--green-600);font-weight:600;text-decoration:none;">View All</a>
+    </div>
+    <div class="card-body" style="padding:0;">
+        <table class="dense-table">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Buyer</th>
+                    <th>Product</th>
+                    <th>Qty</th>
+                    <th>Value</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in recent_orders %}
+                {% set product = order.product %}
+                <tr id="order-row-{{ order.id[:8] }}">
+                    <td><code style="font-size:.75rem;background:var(--green-50);padding:.2rem .5rem;border-radius:4px;">{{ order.id[:8].upper() }}</code></td>
+                    <td>{{ order.customer.name if order.customer else 'Unknown' }}</td>
+                    <td style="font-weight:600;">{{ product.name if product else 'N/A' }}</td>
+                    <td>{{ order.quantity | int }} kg</td>
+                    <td><b style="color:var(--green-700);">₹{{ '{:,.2f}'.format(order.total_price) }}</b></td>
+                    <td>
+                        <span class="badge status-{{ order.status }}" id="status-badge-{{ order.id[:8] }}">
+                            {% if order.status == 'CONFIRMED' %}🔵{% elif order.status == 'SHIPPED' %}🚚{% elif order.status == 'DELIVERED' %}✅{% endif %}
+                            {{ order.status }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if order.status == 'CONFIRMED' %}
+                        <button class="btn btn-amber btn-sm" onclick="updateStatus('{{ order.id }}', 'SHIPPED', '{{ order.id[:8] }}')">Mark Shipped 🚚</button>
+                        {% elif order.status == 'SHIPPED' %}
+                        <button class="btn btn-primary btn-sm" onclick="updateStatus('{{ order.id }}', 'DELIVERED', '{{ order.id[:8] }}')">Mark Delivered ✅</button>
+                        {% else %}
+                        <span class="text-muted" style="font-size:.8rem;">Completed</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="cockpit-card">
+    <div class="card-body">
+        <div class="empty-state" style="padding:2rem;">
+            <span class="emoji">📦</span>
+            <h3>No orders yet</h3>
+            <p>Once buyers purchase your harvested crops, orders will appear here.</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Toast -->
+<div class="toast-container" id="toast-container"></div>
+
+<style>
+.cockpit-card:hover { box-shadow: var(--shadow-md); }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function updateStatus(orderId, newStatus, shortId) {
+    fetch(`/api/order/${orderId}/status`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({status: newStatus})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showToast(`Order #${shortId.toUpperCase()} marked as ${newStatus}`);
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showToast(data.message, 'error');
+        }
+    });
+}
+
+function showToast(msg, type='success') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'toast' + (type === 'error' ? ' toast-error' : '');
+    toast.innerHTML = (type === 'success' ? '✅' : '❌') + ' ' + msg;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 4200);
+}
+</script>
+{% endblock %}

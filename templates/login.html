@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+{% block title %}Login | Grow Fasal{% endblock %}
+{% block page_title %}Login to Grow Fasal{% endblock %}
+
+{% block content %}
+<div class="cockpit-card" style="max-width: 500px; margin: 4rem auto;">
+    <div class="card-header">Welcome Back</div>
+    <div class="card-body">
+        {% if error %}
+            <div class="badge badge-danger" style="margin-bottom: 1.5rem; padding: 0.75rem; width: 100%;">{{ error }}</div>
+        {% endif %}
+        <form action="{{ url_for('login') }}" method="POST">
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-secondary);">Phone Number</label>
+                <input type="text" name="phone" placeholder="Enter Phone Number" required 
+                       style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
+            </div>
+            <div style="margin-bottom: 2rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-secondary);">Password</label>
+                <input type="password" name="password" placeholder="Enter Password" required 
+                       style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem;">LOGIN</button>
+        </form>
+        <div style="margin-top: 1.5rem; text-align: center; font-size: 0.875rem;">
+            Don't have an account? <a href="{{ url_for('register') }}" style="color: var(--accent-secondary); font-weight: 600;">Sign Up</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

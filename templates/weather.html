@@ -1,0 +1,73 @@
+{% extends "layout.html" %}
+{% block title %}Weather Insights | Grow Fasal{% endblock %}
+{% block page_title %}Weather Insights{% endblock %}
+
+{% block content %}
+<div class="cockpit-card" style="margin-bottom: 2rem;">
+    <div class="card-header">6-MONTH SEASONAL WEATHER OUTLOOK</div>
+    <div class="card-body">
+        <p style="color: var(--text-secondary); margin-bottom: 2rem;">
+            Powered by <strong>Open-Meteo API</strong>. Plan your sowing and harvesting cycles using our 24-week seasonal projection. 
+            <i>Data combines high-precision 16-day forecasts with agrarian seasonal models.</i>
+        </p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+            <div style="border: 1px solid var(--border-color); padding: 1.5rem; border-radius: 12px; background: #fdf8f6;">
+                <h3 style="margin-top: 0; color: #c2410c;">Temperature Trend</h3>
+                <div id="temp-plot" style="height: 300px;"></div>
+            </div>
+            
+            <div style="border: 1px solid var(--border-color); padding: 1.5rem; border-radius: 12px; background: #f0fdfa;">
+                <h3 style="margin-top: 0; color: #0d9488;">Rainfall Expectation</h3>
+                <div id="rain-plot" style="height: 300px;"></div>
+            </div>
+        </div>
+
+        <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 1rem; border-radius: 4px;">
+            <strong style="color: #92400e;">Farmer Advice:</strong> Based on the upcoming forecast, prepare for adequate rainfall in the mid-season. Ensure proper drainage for crops sensitive to water-logging.
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const forecast = {{ forecast | tojson | safe }};
+    
+    // Temperature Plot
+    var tempTrace = {
+        x: forecast.weeks,
+        y: forecast.temperature_c,
+        type: 'scatter',
+        mode: 'lines+markers',
+        line: {color: '#f97316', width: 3},
+        marker: {size: 6}
+    };
+    var tempLayout = {
+        margin: { t: 20, b: 40, l: 40, r: 20 },
+        yaxis: { title: 'Max Temp (°C)' },
+        xaxis: { tickangle: -45 },
+        font: { family: 'Inter', size: 11 },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)'
+    };
+    Plotly.newPlot('temp-plot', [tempTrace], tempLayout, {responsive: true});
+
+    // Rainfall Plot
+    var rainTrace = {
+        x: forecast.weeks,
+        y: forecast.rainfall_mm,
+        type: 'bar',
+        marker: {color: '#0ea5e9'}
+    };
+    var rainLayout = {
+        margin: { t: 20, b: 40, l: 40, r: 20 },
+        yaxis: { title: 'Precipitation (mm)' },
+        xaxis: { tickangle: -45 },
+        font: { family: 'Inter', size: 11 },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)'
+    };
+    Plotly.newPlot('rain-plot', [rainTrace], rainLayout, {responsive: true});
+</script>
+{% endblock %}
