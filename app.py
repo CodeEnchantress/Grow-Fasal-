@@ -552,6 +552,46 @@ def update_order_status(order_id):
     db.session.commit()
     return jsonify({"status": "success", "new_status": new_status})
 
+@app.route('/api/crop/<crop_id>/health', methods=['GET'])
+@login_required
+def get_crop_health(crop_id):
+    crop = ActiveCrop.query.get(crop_id)
+    if not crop or crop.user_id != current_user.id:
+        return jsonify({'status': 'error', 'message': 'Crop not found'}), 404
+    
+    score = crop.compliance_score
+    events = crop.pest_risk_events
+    irrigation = crop.irrigation_count
+    grade = advisory.calculate_quality_grade(crop)
+    
+    return jsonify({
+        'status': 'success',
+        'health_score': score,
+        'pest_risk_events': events,
+        'irrigation_count': irrigation,
+        'quality_grade': grade,
+        'message': f"Crop is currently maintaining a Grade {grade} health profile."
+    })
+
+@app.route('/api/crop/<crop_id>/advice', methods=['GET'])
+@login_required
+def get_crop_advice(crop_id):
+    crop = ActiveCrop.query.get(crop_id)
+    if not crop or crop.user_id != current_user.id:
+        return jsonify({'status': 'error', 'message': 'Crop not found'}), 404
+        
+    das = crop.get_das()
+    stage_info = advisory.get_stage_advice(crop.crop_name, das)
+    harvest_info = advisory.get_smart_harvest_advice(crop.crop_name, crop.sowing_date, current_user.state, das)
+    
+    return jsonify({
+        'status': 'success',
+        'stage': stage_info['stage'],
+        'advice': stage_info['advice'],
+        'harvest_alert': harvest_info.get('alert'),
+        'alert_type': harvest_info.get('alert_type')
+    })
+
 
 if __name__ == '__main__':
     with app.app_context():

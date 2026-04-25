@@ -26,24 +26,24 @@
         
         <div class="filter-group" style="display: flex; flex-direction: column; gap: 0.75rem;">
             <label style="display:flex; gap:0.5rem; align-items:center; cursor:pointer;">
-                <input type="checkbox" checked onchange="setCategoryFilter('all')"> <span>All Categories</span>
+                <input type="radio" name="category" value="all" checked onchange="applyFilters()"> <span>All Categories</span>
             </label>
             <label style="display:flex; gap:0.5rem; align-items:center; cursor:pointer;">
-                <input type="checkbox" onchange="setCategoryFilter('Grain')"> <span>Grains & Pulses</span>
+                <input type="radio" name="category" value="Grain" onchange="applyFilters()"> <span>Grains & Pulses</span>
             </label>
             <label style="display:flex; gap:0.5rem; align-items:center; cursor:pointer;">
-                <input type="checkbox" onchange="setCategoryFilter('Vegetable')"> <span>Vegetables</span>
+                <input type="radio" name="category" value="Vegetable" onchange="applyFilters()"> <span>Vegetables</span>
             </label>
             <label style="display:flex; gap:0.5rem; align-items:center; cursor:pointer;">
-                <input type="checkbox" onchange="setCategoryFilter('Fruit')"> <span>Fruits</span>
+                <input type="radio" name="category" value="Fruit" onchange="applyFilters()"> <span>Fruits</span>
             </label>
         </div>
 
         <h3 style="font-size: 1rem; margin-top: 2rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--slate-100); padding-bottom: 0.5rem;">Quality Grade</h3>
         <div class="filter-group" style="display: flex; flex-direction: column; gap: 0.75rem;">
-            <button class="filter-chip active" onclick="setGradeFilter('all', this)" style="width:100%; justify-content:center;">All Grades</button>
-            <button class="filter-chip" onclick="setGradeFilter('A', this)" style="width:100%; justify-content:center;">⭐ Grade A (Premium)</button>
-            <button class="filter-chip" onclick="setGradeFilter('B', this)" style="width:100%; justify-content:center;">Grade B (Standard)</button>
+            <button class="filter-chip active" data-val="all" onclick="setGradeFilter(this)" style="width:100%; justify-content:center;">All Grades</button>
+            <button class="filter-chip" data-val="A" onclick="setGradeFilter(this)" style="width:100%; justify-content:center;">⭐ Grade A (Premium)</button>
+            <button class="filter-chip" data-val="B" onclick="setGradeFilter(this)" style="width:100%; justify-content:center;">Grade B (Standard)</button>
         </div>
         
         <div style="margin-top: 2rem; background: var(--blue-50); padding: 1rem; border-radius: 8px;">
@@ -148,32 +148,45 @@
     </div>
 </div>
 
-<span id="page-config" data-auth="{{ is_buyer | lower }}" style="display:none;"></span>
+<span id="page-config" data-logged-in="{{ current_user.is_authenticated | lower }}" data-is-buyer="{{ (current_user.is_authenticated and current_user.role == 'BUYER') | lower }}" style="display:none;"></span>
 <div class="toast-container" id="toast-container"></div>
 
 {% endblock %}
 
 {% block scripts %}
 <script>
-var IS_AUTHENTICATED = (document.getElementById('page-config').dataset.auth === 'true');
+var IS_LOGGED_IN = (document.getElementById('page-config').dataset.loggedIn === 'true');
+var IS_BUYER = (document.getElementById('page-config').dataset.isBuyer === 'true');
 var currentProductId = null;
 var currentPricePerKg = 0;
 var currentMaxQty = 0;
 
-function filterProducts() {
+function applyFilters() {
     var q = document.getElementById('search-input').value.toLowerCase();
-    document.querySelectorAll('.product-card').forEach(function(card) {
-        var match = card.dataset.name.includes(q);
-        card.style.display = match ? '' : 'none';
+    
+    var categoryChecked = document.querySelector('input[name="category"]:checked');
+    var category = categoryChecked ? categoryChecked.value : 'all';
+
+    var gradeBtn = document.querySelector('.filter-chip.active');
+    var grade = gradeBtn ? gradeBtn.dataset.val : 'all';
+
+    document.querySelectorAll('.product-card').forEach(card => {
+        var matchName = card.dataset.name.includes(q);
+        var matchCategory = (category === 'all' || card.dataset.category.toLowerCase() === category.toLowerCase());
+        var matchGrade = (grade === 'all' || card.dataset.grade === grade);
+
+        card.style.display = (matchName && matchCategory && matchGrade) ? '' : 'none';
     });
 }
 
-function setGradeFilter(grade, btn) {
+function filterProducts() {
+    applyFilters();
+}
+
+function setGradeFilter(btn) {
     document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
     btn.classList.add('active');
-    document.querySelectorAll('.product-card').forEach(card => {
-        card.style.display = (grade === 'all' || card.dataset.grade === grade) ? '' : 'none';
-    });
+    applyFilters();
 }
 
 function sortProducts(criteria) {
@@ -191,9 +204,13 @@ function sortProducts(criteria) {
 }
 
 function openBuyModal(btn) {
-    if (!IS_AUTHENTICATED) {
+    if (!IS_LOGGED_IN) {
         showToast('Please login to make a purchase', 'error');
         setTimeout(() => window.location.href = '/login', 1500);
+        return;
+    }
+    if (!IS_BUYER) {
+        showToast('Only Buyers can make purchases', 'error');
         return;
     }
     currentProductId = btn.dataset.pid;
@@ -202,6 +219,9 @@ function openBuyModal(btn) {
     document.getElementById('modal-product-name').textContent = btn.dataset.pname;
     document.getElementById('modal-img-preview').style.backgroundImage = 'url('+btn.dataset.image+')';
     document.getElementById('modal-total').textContent = '\u20B9' + currentPricePerKg;
+    // Set max quantity for input
+    document.getElementById('qty-input').max = currentMaxQty;
+    document.getElementById('qty-input').value = 1;
     document.getElementById('buy-modal-overlay').classList.add('open');
 }
 
@@ -209,6 +229,11 @@ function closeBuyModal() { document.getElementById('buy-modal-overlay').classLis
 
 function updateTotal() {
     var qty = parseFloat(document.getElementById('qty-input').value) || 0;
+    if (qty > currentMaxQty) {
+        qty = currentMaxQty;
+        document.getElementById('qty-input').value = qty;
+        showToast('Maximum available stock is ' + currentMaxQty + 'kg', 'error');
+    }
     document.getElementById('modal-total').textContent = '\u20B9' + (qty * currentPricePerKg).toFixed(2);
 }
 

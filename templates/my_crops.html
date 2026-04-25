@@ -78,16 +78,39 @@
                     🚀 List to Market
                 </button>
                 {% else %}
-                <button class="btn btn-outline btn-sm" style="flex: 1;">Check Health</button>
-                <button class="btn btn-outline btn-sm" style="flex: 1;">Get Advice</button>
+                <button class="btn btn-outline btn-sm" style="flex: 1;" onclick="checkHealth('{{ crop.id }}', '{{ crop.crop_name }}')">Health</button>
+                <button class="btn btn-outline btn-sm" style="flex: 1;" onclick="getAdvice('{{ crop.id }}', '{{ crop.crop_name }}')">Advice</button>
+                <button class="btn btn-amber btn-sm" style="flex: 1;" onclick="openListModal('{{ crop.id }}', '{{ crop.crop_name }}', '{{ crop.quality_grade }}')" title="Bypass growth time for presentation demo">⚡ Demo List</button>
                 {% endif %}
             </div>
         </div>
         {% endfor %}
     </div>
 
+    <!-- Smart Sow Panel -->
+    <div id="sow-panel" class="manual-sow-panel" style="margin-top: 3rem; background: #fff; padding: 2rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-md); border: 2px solid var(--green-500);">
+        <h3 style="margin-bottom: 1rem; color: var(--green-700);">🌟 Smart Crop Prediction</h3>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Let AI predict the best crops for your location based on soil and weather data.</p>
+        
+        <div style="text-align: center;" id="smart-predict-action">
+            <button class="btn btn-primary btn-lg" onclick="predictSmartCrops()">🧠 Predict Best Crops</button>
+        </div>
+        
+        <div id="smart-predict-loading" style="display:none; text-align:center; padding: 1rem;">
+            <div style="font-size: 2rem; animation: spin 1s linear infinite;">⏳</div>
+            <p>Analyzing soil, weather, and market trends...</p>
+        </div>
+        
+        <div id="smart-predict-results" style="display:none; margin-top: 1.5rem;">
+            <h4 style="margin-bottom: 1rem;">Top Recommendations</h4>
+            <div id="recommendations-container" style="display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 1rem;">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+    </div>
+
     <!-- Manual Sow Panel -->
-    <div id="sow-panel" class="manual-sow-panel" style="margin-top: 3rem; background: #fff; padding: 2rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-md);">
+    <div class="manual-sow-panel" style="margin-top: 2rem; background: #fff; padding: 2rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-md);">
         <h3 style="margin-bottom: 1rem;">Manual Sow Option</h3>
         <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">If GPS is unavailable, use this panel to manually start a crop cycle on your farm profile.</p>
         
@@ -161,6 +184,68 @@
             <button class="btn btn-primary btn-lg btn-full" onclick="confirmListing()">
                 ✅ Add to Marketplace
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- Health Modal -->
+<div class="modal-overlay" id="health-modal-overlay" onclick="overlayClose(event, 'health-modal-overlay')">
+    <div class="modal" style="max-width: 400px;">
+        <button class="modal-close" onclick="closeHealthModal()">&#x2715;</button>
+        <div class="modal-title">🏥 Crop Health Report</div>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;"><span id="health-crop-name" style="font-weight:700; color:var(--green-700);"></span></p>
+        
+        <div id="health-loading" style="text-align:center; padding: 2rem;">
+            <div style="font-size: 2rem; animation: spin 1s linear infinite;">⏳</div>
+            <p>Scanning crop health...</p>
+        </div>
+
+        <div id="health-content" style="display:none;">
+            <div style="background: var(--slate-50); padding: 1.25rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <div style="display:flex; justify-content:space-between; margin-bottom: 0.75rem;">
+                    <span style="font-size: 0.85rem; color: var(--text-secondary);">Health Score:</span>
+                    <span style="font-weight: 700; color: var(--green-700);"><span id="health-score">0</span>%</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom: 0.75rem;">
+                    <span style="font-size: 0.85rem; color: var(--text-secondary);">Quality Grade:</span>
+                    <span style="font-weight: 700; color: var(--slate-900);">Grade <span id="health-grade">-</span></span>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom: 0.75rem;">
+                    <span style="font-size: 0.85rem; color: var(--text-secondary);">Irrigation Count:</span>
+                    <span style="font-weight: 700; color: var(--slate-900);"><span id="health-irrigation">0</span></span>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                    <span style="font-size: 0.85rem; color: var(--text-secondary);">Pest Risk Events:</span>
+                    <span style="font-weight: 700; color: var(--amber-600);"><span id="health-pest">0</span></span>
+                </div>
+            </div>
+            <p id="health-message" style="text-align: center; font-weight: 600;"></p>
+        </div>
+    </div>
+</div>
+
+<!-- Advice Modal -->
+<div class="modal-overlay" id="advice-modal-overlay" onclick="overlayClose(event, 'advice-modal-overlay')">
+    <div class="modal" style="max-width: 500px;">
+        <button class="modal-close" onclick="closeAdviceModal()">&#x2715;</button>
+        <div class="modal-title">💡 Agronomy Advice</div>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;"><span id="advice-crop-name" style="font-weight:700; color:var(--green-700);"></span></p>
+        
+        <div id="advice-loading" style="text-align:center; padding: 2rem;">
+            <div style="font-size: 2rem; animation: spin 1s linear infinite;">⏳</div>
+            <p>Fetching latest agronomy guidelines...</p>
+        </div>
+
+        <div id="advice-content" style="display:none;">
+            <div style="background: var(--blue-50); padding: 1.25rem; border-radius: 8px; margin-bottom: 1.5rem; border-left: 4px solid var(--blue-500);">
+                <h4 style="margin-bottom: 0.5rem; color: var(--blue-900);">Current Stage: <span id="advice-stage"></span></h4>
+                <p id="advice-text" style="color: var(--blue-800); font-size: 0.95rem;"></p>
+            </div>
+            
+            <div id="harvest-alert-box" style="display: none; background: var(--amber-50); padding: 1.25rem; border-radius: 8px; border-left: 4px solid var(--amber-500);">
+                <h4 style="margin-bottom: 0.5rem; color: var(--amber-900);">⚠️ Smart Alert</h4>
+                <p id="harvest-alert-text" style="color: var(--amber-800); font-size: 0.95rem;"></p>
+            </div>
         </div>
     </div>
 </div>
@@ -283,6 +368,151 @@ function overlayClose(event, id) {
     if (event.target === event.currentTarget) {
         document.getElementById(id).classList.remove('open');
     }
+}
+
+// Smart Predict Functions
+function predictSmartCrops() {
+    document.getElementById('smart-predict-action').style.display = 'none';
+    document.getElementById('smart-predict-loading').style.display = 'block';
+    
+    if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                fetchSmartCrops(pos.coords.latitude, pos.coords.longitude);
+            },
+            (err) => {
+                fetchSmartCrops(20.5937, 78.9629); // fallback
+            }
+        );
+    } else {
+        fetchSmartCrops(20.5937, 78.9629);
+    }
+}
+
+function fetchSmartCrops(lat, lon) {
+    fetch('/api/predict/crops/smart', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({lat: lat, lon: lon})
+    })
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('smart-predict-loading').style.display = 'none';
+        if (data.status === 'success') {
+            document.getElementById('smart-predict-results').style.display = 'block';
+            const container = document.getElementById('recommendations-container');
+            container.innerHTML = '';
+            
+            data.recommendations.forEach(rec => {
+                const card = document.createElement('div');
+                card.style.cssText = 'flex: 1; min-width: 150px; background: var(--slate-50); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color); text-align: center;';
+                card.innerHTML = `
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">${rec.crop.toLowerCase() === 'rice' ? '🌾' : rec.crop.toLowerCase() === 'wheat' ? '🌿' : '🌱'}</div>
+                    <h4 style="margin-bottom: 0.25rem;">${rec.crop}</h4>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">Suitability: ${Math.round(rec.confidence * 100)}%</div>
+                    <button class="btn btn-primary btn-sm btn-full" onclick="smartSow('${rec.crop}')">Sow Now</button>
+                `;
+                container.appendChild(card);
+            });
+        } else {
+            showToast('Failed to predict crops', 'error');
+            document.getElementById('smart-predict-action').style.display = 'block';
+        }
+    })
+    .catch(() => {
+        showToast('Error predicting crops', 'error');
+        document.getElementById('smart-predict-loading').style.display = 'none';
+        document.getElementById('smart-predict-action').style.display = 'block';
+    });
+}
+
+function smartSow(cropName) {
+    if (!confirm(`Confirm sowing ${cropName} on your farm based on AI recommendation?`)) return;
+
+    fetch('/api/sow-manual', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({crop_name: cropName})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showToast('AI Recommended Crop sown successfully!');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showToast(data.message, 'error');
+        }
+    });
+}
+
+// Health Modal Functions
+function checkHealth(cropId, cropName) {
+    document.getElementById('health-crop-name').textContent = cropName;
+    document.getElementById('health-modal-overlay').classList.add('open');
+    document.getElementById('health-loading').style.display = 'block';
+    document.getElementById('health-content').style.display = 'none';
+    
+    fetch(`/api/crop/${cropId}/health`)
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('health-loading').style.display = 'none';
+            if (data.status === 'success') {
+                document.getElementById('health-content').style.display = 'block';
+                document.getElementById('health-score').textContent = data.health_score;
+                document.getElementById('health-grade').textContent = data.quality_grade;
+                document.getElementById('health-irrigation').textContent = data.irrigation_count;
+                document.getElementById('health-pest').textContent = data.pest_risk_events;
+                document.getElementById('health-message').textContent = data.message;
+            } else {
+                closeHealthModal();
+                showToast(data.message || 'Failed to fetch health data', 'error');
+            }
+        })
+        .catch(() => {
+            closeHealthModal();
+            showToast('Error fetching health data', 'error');
+        });
+}
+
+function closeHealthModal() {
+    document.getElementById('health-modal-overlay').classList.remove('open');
+}
+
+// Advice Modal Functions
+function getAdvice(cropId, cropName) {
+    document.getElementById('advice-crop-name').textContent = cropName;
+    document.getElementById('advice-modal-overlay').classList.add('open');
+    document.getElementById('advice-loading').style.display = 'block';
+    document.getElementById('advice-content').style.display = 'none';
+    
+    fetch(`/api/crop/${cropId}/advice`)
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('advice-loading').style.display = 'none';
+            if (data.status === 'success') {
+                document.getElementById('advice-content').style.display = 'block';
+                document.getElementById('advice-stage').textContent = data.stage;
+                document.getElementById('advice-text').textContent = data.advice;
+                
+                if (data.harvest_alert) {
+                    document.getElementById('harvest-alert-box').style.display = 'block';
+                    document.getElementById('harvest-alert-text').textContent = data.harvest_alert;
+                } else {
+                    document.getElementById('harvest-alert-box').style.display = 'none';
+                }
+            } else {
+                closeAdviceModal();
+                showToast(data.message || 'Failed to fetch advice', 'error');
+            }
+        })
+        .catch(() => {
+            closeAdviceModal();
+            showToast('Error fetching advice', 'error');
+        });
+}
+
+function closeAdviceModal() {
+    document.getElementById('advice-modal-overlay').classList.remove('open');
 }
 </script>
 
