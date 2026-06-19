@@ -704,6 +704,6 @@ if __name__ == '__main__':
                 db.session.add(p)
             db.session.commit()
 
-    app.run(debug=True, port=8000)
+    app.run(debug=True, port=5000)
 
 
