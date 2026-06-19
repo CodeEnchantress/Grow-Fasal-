@@ -1,4 +1,4 @@
-# Grow Fasal: Quantitative Agricultural Advisory & High-Trust B2B Marketplace
+Grow Fasal: Quantitative Agricultural Advisory & High-Trust B2B Marketplace
 
 Grow Fasal is a logic-dense, data-centric Flask platform designed to optimize agricultural operations, regional economic planning, and supply chain logistics for farmers and wholesale buyers. 
 
@@ -6,7 +6,7 @@ The system leverages a multi-algorithm machine learning suite, real-time governm
 
 ---
 
-## 🏗️ System Architecture & Data Flow
+ 🏗️ System Architecture & Data Flow
 
 The platform is designed around a clean separation of concerns, separating data ingestion, intelligence models, database persistence, and user interfaces:
 
@@ -24,9 +24,9 @@ graph TD
     E -->|Inventory Listings| G[B2B E-Commerce Marketplace]
 ```
 
----
 
-## 🧠 Quantitative Machine Learning Suite
+
+ Quantitative Machine Learning Suite
 
 The intelligence core (`engine/ml_suite.py`) operates on a five-model suite designed to handle recommendation, time-series forecasting, and probabilistic risk modeling.
 
@@ -37,7 +37,7 @@ $$P(\text{Crop}_c \mid \mathbf{x}) = \frac{P_{RF}(\text{Crop}_c \mid \mathbf{x})
 
 The top 3 crops with the highest ensemble probability are returned.
 
-### 2. Bayesian Pest Risk Outbreak Probability
+ 2. Bayesian Pest Risk Outbreak Probability
 Pest risk levels are determined using a Gaussian Naive Bayes model. It uses seasonal temperature $T$ and humidity $H$ variables to classify the probability of an outbreak ($R \in \{0, 1\}$):
 
 $$P(R = 1 \mid T, H) = \frac{P(T, H \mid R = 1) \cdot P(R = 1)}{P(T, H)}$$
@@ -60,7 +60,7 @@ h_t &= o_t * \tanh(C_t) && \text{(Hidden Output)}
 
 The final layer uses a sigmoid activation to output hazard risk percentage.
 
-### 4. Time-Series Price Trend Forecasting
+4. Time-Series Price Trend Forecasting
 Market commodity price trends are simulated using Facebook's Prophet framework, modeled as an additive regression:
 
 $$y(t) = g(t) + s(t) + h(t) + \epsilon_t$$
@@ -70,9 +70,9 @@ $$y(t) = g(t) + s(t) + h(t) + \epsilon_t$$
 *   $h(t)$: Holiday effects representing temporary market closures.
 *   $\epsilon_t$: Error term representing anomalous variance.
 
----
 
-## 📈 Economic Profitability Engine
+
+📈 Economic Profitability Engine
 
 The profitability engine (`engine/economics.py`) models agricultural inputs and revenues using state-specific cost variables defined by the **Commission for Agricultural Costs and Prices (CACP)**. 
 
@@ -88,9 +88,9 @@ Using the calculated production cost ($C_{prod}$) and revenue ($R = P_{market} \
 
 ---
 
-## 📡 Geospatial Geocoding & Data Clients
+ Geospatial Geocoding & Data Clients
 
-### 1. Mandi Proximity Geocoding
+ 1. Mandi Proximity Geocoding
 To find the closest wholesale market (Mandi) to a farmer's coordinate point $(\phi_1, \lambda_1)$, the system applies the **Haversine formula** across a pre-calculated index of geocoded major Indian wholesale markets $(\phi_2, \lambda_2)$:
 
 $$\begin{aligned}
@@ -101,7 +101,7 @@ d &= R_{earth} \cdot c
 
 Where $R_{earth} \approx 6371\text{ km}$. The nearest functional Mandis are returned, sorted by ascending distance ($d$).
 
-### 2. Caching Strategy (Agmarknet Live API)
+ 2. Caching Strategy (Agmarknet Live API)
 To prevent network bottlenecks and handle API rate limits, `engine/mandi_api.py` implements an active caching mechanism:
 *   Fetches the data.gov.in Agmarknet feed and writes JSON payloads locally.
 *   Verifies a timestamp file. Cache hit occurs if local log is `< 86,400 seconds` (24 hours) old.
@@ -109,18 +109,18 @@ To prevent network bottlenecks and handle API rate limits, `engine/mandi_api.py`
 
 ---
 
-## 🧪 Testing Suite & Verification
+Testing Suite & Verification
 
 The project includes an automated test framework containing 13 distinct verification cases to check regression, bounds limits, and parser integrity.
 
-### Run Tests Locally
+ Run Tests Locally
 You can run the full test suite locally by running:
 
 ```bash
 python tests/test_suite.py
 ```
 
-### CI/CD Pipeline
+ CI/CD Pipeline
 A GitHub Actions workflow is active at `.github/workflows/python-tests.yml`. On every push to the `main` branch, the pipeline:
 1. Initializes a virtual environment on Ubuntu-Latest running Python 3.10.
 2. Installs requirements from `requirements.txt`.
@@ -128,16 +128,16 @@ A GitHub Actions workflow is active at `.github/workflows/python-tests.yml`. On 
 
 ---
 
-## 🛠️ Quick Start
+ Quick Start
 
-### 1. Installation
+1. Installation
 Clone the repository and install the dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Configuration
+ 2. Configuration
 Create a `.env` file in the root directory and add your Agmarknet credentials:
 
 ```env
@@ -145,11 +145,11 @@ SECRET_KEY=your-secret-key-123
 DATA_GOV_API_KEY=your-data-gov-api-key
 ```
 
-### 3. Execution
+ 3. Execution
 Launch the local web server:
 
 ```bash
 python app.py
 ```
 
-Navigate to `http://localhost:8000` to interact with the platform.
+Navigate to `http://localhost:5000` to interact with the platform.
