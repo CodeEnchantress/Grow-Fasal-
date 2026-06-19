@@ -34,8 +34,11 @@ class WeatherAPI:
             daily = data.get('daily', {})
             
             # Baseline data
-            base_temp_max = sum(daily.get('temperature_2m_max', [30])) / max(len(daily.get('temperature_2m_max', [30])), 1)
-            base_precip = sum(daily.get('precipitation_sum', [0])) / max(len(daily.get('precipitation_sum', [0])), 1)
+            temp_max_list = [t for t in daily.get('temperature_2m_max', []) if t is not None]
+            base_temp_max = sum(temp_max_list) / len(temp_max_list) if temp_max_list else 32.0
+            
+            precip_list = [p for p in daily.get('precipitation_sum', []) if p is not None]
+            base_precip = sum(precip_list) / len(precip_list) if precip_list else 2.0
         except Exception as e:
             print("Open-Meteo Error:", e)
             # Fallbacks if offline
