@@ -71,6 +71,7 @@ class Product(db.Model):
     # ML Verified Quality Score (A/B/C)
     quality_grade = db.Column(db.String(5), default='N/A')
     growth_history_json = db.Column(db.Text) # JSON string of weather/care history details
+    image_url = db.Column(db.String(255), nullable=True)
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 

@@ -1,91 +1,280 @@
 {% extends "layout.html" %}
-{% block title %}Buyer Marketplace | Grow Fasal System{% endblock %}
-{% block page_title %}Bulk Buyer Marketplace{% endblock %}
+{% block title %}Fasal Marketplace | Grow Fasal{% endblock %}
+{% block page_title %}🛒 Fasal Marketplace{% endblock %}
 
 {% block content %}
-<div class="stats-grid">
-    <div class="stat-card">
-        <div class="stat-label">Active Listing Units</div>
-        <div class="stat-value">54+</div>
-        <div class="stat-trend" style="color: var(--accent-primary);">Verified Producer Lots</div>
+
+<!-- Amazon-style Top Bar with Search & Sort -->
+<div class="market-controls" style="display:flex; gap:1rem; align-items:center; margin-bottom: 2rem; background: #fff; padding: 1.25rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);">
+    <div style="flex:1; position:relative;">
+        <input type="text" class="form-input" id="search-input" placeholder="Search for Rice, Wheat, Farmer names..." oninput="filterProducts()" style="padding-left: 2.5rem;">
+        <span style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); opacity:0.5;">🔍</span>
     </div>
-    <div class="stat-card">
-        <div class="stat-label">System High Grade (%)</div>
-        <div class="stat-value">84.2%</div>
-        <div class="stat-trend" style="color: var(--accent-primary);">A Grade (Verified)</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-label">Mandi Average Index</div>
-        <div class="stat-value">₹ 2,420</div>
-        <div class="stat-trend" style="color: var(--text-secondary);">Real-time Avg. (Agmarknet)</div>
+    
+    <select class="form-input" style="width: 200px;" onchange="sortProducts(this.value)">
+        <option value="newest">Sort by: Newest</option>
+        <option value="price-low">Price: Low to High</option>
+        <option value="price-high">Price: High to Low</option>
+        <option value="grade">Top Quality (Grade A)</option>
+    </select>
+</div>
+
+<div style="display: grid; grid-template-columns: 240px 1fr; gap: 2rem;">
+    <!-- Amazon-style Sidebar Filters -->
+    <aside class="market-filters" style="background: #fff; padding: 1.5rem; border-radius: var(--radius-lg); align-self: start; position: sticky; top: 1rem;">
+        <h3 style="font-size: 1rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--slate-100); padding-bottom: 0.5rem;">Filter by Category</h3>
+        
+        <div class="filter-group" style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <label style="display:flex; gap:0.5rem; align-items:center; cursor:pointer;">
+                <input type="radio" name="category" value="all" checked onchange="applyFilters()"> <span>All Categories</span>
+            </label>
+            <label style="display:flex; gap:0.5rem; align-items:center; cursor:pointer;">
+                <input type="radio" name="category" value="Grain" onchange="applyFilters()"> <span>Grains & Pulses</span>
+            </label>
+            <label style="display:flex; gap:0.5rem; align-items:center; cursor:pointer;">
+                <input type="radio" name="category" value="Vegetable" onchange="applyFilters()"> <span>Vegetables</span>
+            </label>
+            <label style="display:flex; gap:0.5rem; align-items:center; cursor:pointer;">
+                <input type="radio" name="category" value="Fruit" onchange="applyFilters()"> <span>Fruits</span>
+            </label>
+        </div>
+
+        <h3 style="font-size: 1rem; margin-top: 2rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--slate-100); padding-bottom: 0.5rem;">Quality Grade</h3>
+        <div class="filter-group" style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <button class="filter-chip active" data-val="all" onclick="setGradeFilter(this)" style="width:100%; justify-content:center;">All Grades</button>
+            <button class="filter-chip" data-val="A" onclick="setGradeFilter(this)" style="width:100%; justify-content:center;">⭐ Grade A (Premium)</button>
+            <button class="filter-chip" data-val="B" onclick="setGradeFilter(this)" style="width:100%; justify-content:center;">Grade B (Standard)</button>
+        </div>
+        
+        <div style="margin-top: 2rem; background: var(--blue-50); padding: 1rem; border-radius: 8px;">
+            <p style="font-size: 0.75rem; color: var(--blue-700); font-weight: 600; line-height: 1.4;">
+                🛡️ All listings are ML-inspected and verified for quality before appearing on Fasal Marketplace.
+            </p>
+        </div>
+    </aside>
+
+    <!-- Main Product Grid -->
+    <main>
+        {% if products %}
+        <div class="product-grid" id="product-grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
+            {% for product in products %}
+            <div class="product-card" 
+                 data-name="{{ product.name | lower }}" 
+                 data-grade="{{ product.quality_grade }}" 
+                 data-price="{{ product.price_per_kg }}"
+                 data-category="{{ product.category or 'Grain' }}">
+
+                <div class="product-card-img" style="background-image: url('{{ product.image_url }}'); background-size: cover; background-position: center; height: 180px; position: relative;">
+                    <div class="product-card-badge">
+                        <span class="badge badge-grade-{{ product.quality_grade }}">Grade {{ product.quality_grade }}</span>
+                    </div>
+                    {% if product.price_diff < 0 %}
+                    <div style="position: absolute; top: 10px; right: 10px; background: #e11d48; color: white; padding: 4px 10px; border-radius: 4px; font-size: 0.7rem; font-weight: 800; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                        SAVE {{ product.price_diff | abs }}%
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="product-card-body">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div class="product-name" style="font-size: 1.1rem; font-weight: 700;">{{ product.name }}</div>
+                        <span style="font-size: 0.7rem; background: var(--slate-100); padding: 2px 6px; border-radius: 4px; color: var(--text-secondary);">Verified Farmer</span>
+                    </div>
+                    
+                    <div class="product-meta" style="margin: 0.5rem 0;">
+                        <span>👨‍🌾 Farmer #{{ product.farmer_id[:6] }}</span>
+                        <span>📦 {{ product.quantity_available | int }} kg</span>
+                    </div>
+
+                    <div style="background: var(--slate-50); padding: 0.5rem; border-radius: 6px; margin: 0.75rem 0;">
+                        <div style="display:flex; justify-content:space-between; font-size: 0.75rem;">
+                            <span style="color:var(--text-muted)">Mandi Price:</span>
+                            <span style="font-weight:600; color:var(--text-secondary)">&#8377;{{ product.market_price }}/kg</span>
+                        </div>
+                    </div>
+
+                    <div class="product-price-row" style="margin-top: 0.5rem;">
+                        <div class="product-price" style="font-size: 1.5rem; color: var(--slate-900);">
+                            &#8377;{{ product.price_per_kg }}<span style="font-size: .85rem; font-weight: 500; color: var(--text-secondary);">/kg</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-card-footer" style="padding: 1rem; border-top: 1px solid var(--slate-100);">
+                    <button class="btn btn-primary btn-full"
+                            data-pid="{{ product.id }}"
+                            data-pname="{{ product.name }}"
+                            data-price="{{ product.price_per_kg }}"
+                            data-stock="{{ product.quantity_available }}"
+                            data-grade="{{ product.quality_grade }}"
+                            data-image="{{ product.image_url }}"
+                            onclick="openBuyModal(this)">
+                        Buy Now
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="emoji">&#127807;</span>
+            <h3>No products found</h3>
+            <p>Try adjusting your search or filters.</p>
+        </div>
+        {% endif %}
+    </main>
+</div>
+
+<!-- Modal & Config (Keep previous logic) -->
+<div class="modal-overlay" id="buy-modal-overlay" onclick="overlayClose(event, 'buy-modal-overlay')">
+    <div class="modal">
+        <button class="modal-close" onclick="closeBuyModal()">&#x2715;</button>
+        <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1.25rem;">
+            <div id="modal-img-preview" style="width: 80px; height: 80px; border-radius: 8px; background-size: cover; background-position: center;"></div>
+            <div>
+                <div class="modal-title" id="modal-product-name">Product</div>
+                <span class="badge badge-success" id="modal-grade-badge">Grade A</span>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Quantity to Purchase (kg)</label>
+            <input type="number" class="form-input" id="qty-input" min="1" value="1" oninput="updateTotal()">
+        </div>
+        <div style="background: var(--green-800); color: #fff; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: 600;">Total Payable</span>
+            <span style="font-size: 1.6rem; font-weight: 900;" id="modal-total">&#8377;0</span>
+        </div>
+        <button class="btn btn-primary btn-lg btn-full" id="confirm-purchase-btn" onclick="confirmPurchase()">Confirm Order</button>
     </div>
 </div>
 
-<div class="cockpit-card">
-    <div class="card-header">🛒 VERIFIED PRODUCER LISTINGS (REAL-TIME)</div>
-    <div class="card-body" style="padding: 0;">
-        <table class="dense-table">
-            <thead>
-                <tr>
-                    <th>PRODUCER ID</th>
-                    <th>COMMODITY</th>
-                    <th>TOTAL QTY (KG)</th>
-                    <th>VERIFIED QUALITY</th>
-                    <th>PRICE (MODAL)</th>
-                    <th>ACTION</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for product in products %}
-                    <tr>
-                        <td>{{ product.farmer_id[:8] }}</td>
-                        <td style="font-weight: 700;">{{ product.name }}</td>
-                        <td>{{ product.quantity_available }} kg</td>
-                        <td><span class="badge badge-success" style="font-size: 1rem; border: 1px solid green;">{{ product.quality_grade }}</span></td>
-                        <td><b>₹ {{ product.price_per_kg }}/kg</b></td>
-                        <td>
-                            <button class="btn btn-outline" style="padding: 0.25rem 0.75rem;">View growth history</button>
-                            <button class="btn btn-primary" style="padding: 0.25rem 0.75rem; margin-left: 0.5rem;">Purchase Bulk</button>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
+<span id="page-config" data-logged-in="{{ current_user.is_authenticated | lower }}" data-is-buyer="{{ (current_user.is_authenticated and current_user.role == 'BUYER') | lower }}" style="display:none;"></span>
+<div class="toast-container" id="toast-container"></div>
 
-<div class="cockpit-card" style="margin-top: 2rem;">
-    <div class="card-header">📈 AGMARKNET LIVE PRICE INDEX</div>
-    <div class="card-body">
-        <p style="font-size: 0.8125rem; color: var(--text-secondary);">Compare producer prices with official government Mandi rates (Agmarknet).</p>
-        <div id="mandi-comparison-plot" style="height: 300px;"></div>
-    </div>
-</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // Initialize Mandi Comparison Plot
-    var trace1 = {
-        x: ['Rice', 'Maize', 'Cotton', 'Wheat', 'Sugarcane'],
-        y: [2200, 1800, 5400, 2100, 3500],
-        name: 'Mandi Modal Price',
-        type: 'bar',
-        marker: {color: '#94a3b8'}
-    };
-    var trace2 = {
-        x: ['Rice', 'Maize', 'Cotton', 'Wheat', 'Sugarcane'],
-        y: [2350, 1950, 5600, 2250, 3800],
-        name: 'Producer Verified Avg.',
-        type: 'bar',
-        marker: {color: '#10b981'}
-    };
-    var plotData = [trace1, trace2];
-    var layout = {
-        barmode: 'group',
-        margin: { t: 20, b: 40, l: 40, r: 20 },
-        font: { family: 'Inter' }
-    };
-    Plotly.newPlot('mandi-comparison-plot', plotData, layout);
+var IS_LOGGED_IN = (document.getElementById('page-config').dataset.loggedIn === 'true');
+var IS_BUYER = (document.getElementById('page-config').dataset.isBuyer === 'true');
+var currentProductId = null;
+var currentPricePerKg = 0;
+var currentMaxQty = 0;
+
+function applyFilters() {
+    var q = document.getElementById('search-input').value.toLowerCase();
+    
+    var categoryChecked = document.querySelector('input[name="category"]:checked');
+    var category = categoryChecked ? categoryChecked.value : 'all';
+
+    var gradeBtn = document.querySelector('.filter-chip.active');
+    var grade = gradeBtn ? gradeBtn.dataset.val : 'all';
+
+    document.querySelectorAll('.product-card').forEach(card => {
+        var matchName = card.dataset.name.includes(q);
+        var matchCategory = (category === 'all' || card.dataset.category.toLowerCase() === category.toLowerCase());
+        var matchGrade = (grade === 'all' || card.dataset.grade === grade);
+
+        card.style.display = (matchName && matchCategory && matchGrade) ? '' : 'none';
+    });
+}
+
+function filterProducts() {
+    applyFilters();
+}
+
+function setGradeFilter(btn) {
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    applyFilters();
+}
+
+function sortProducts(criteria) {
+    var grid = document.getElementById('product-grid');
+    var cards = Array.from(grid.querySelectorAll('.product-card'));
+    
+    cards.sort((a, b) => {
+        if (criteria === 'price-low') return parseFloat(a.dataset.price) - parseFloat(b.dataset.price);
+        if (criteria === 'price-high') return parseFloat(b.dataset.price) - parseFloat(a.dataset.price);
+        if (criteria === 'grade') return a.dataset.grade.localeCompare(b.dataset.grade);
+        return 0; // newest/default
+    });
+    
+    cards.forEach(card => grid.appendChild(card));
+}
+
+function openBuyModal(btn) {
+    if (!IS_LOGGED_IN) {
+        showToast('Please login to make a purchase', 'error');
+        setTimeout(() => window.location.href = '/login', 1500);
+        return;
+    }
+    if (!IS_BUYER) {
+        showToast('Only Buyers can make purchases', 'error');
+        return;
+    }
+    currentProductId = btn.dataset.pid;
+    currentPricePerKg = parseFloat(btn.dataset.price);
+    currentMaxQty = parseFloat(btn.dataset.stock);
+    document.getElementById('modal-product-name').textContent = btn.dataset.pname;
+    document.getElementById('modal-img-preview').style.backgroundImage = 'url('+btn.dataset.image+')';
+    document.getElementById('modal-total').textContent = '\u20B9' + currentPricePerKg;
+    // Set max quantity for input
+    document.getElementById('qty-input').max = currentMaxQty;
+    document.getElementById('qty-input').value = 1;
+    document.getElementById('buy-modal-overlay').classList.add('open');
+}
+
+function closeBuyModal() { document.getElementById('buy-modal-overlay').classList.remove('open'); }
+
+function updateTotal() {
+    var qty = parseFloat(document.getElementById('qty-input').value) || 0;
+    if (qty > currentMaxQty) {
+        qty = currentMaxQty;
+        document.getElementById('qty-input').value = qty;
+        showToast('Maximum available stock is ' + currentMaxQty + 'kg', 'error');
+    }
+    document.getElementById('modal-total').textContent = '\u20B9' + (qty * currentPricePerKg).toFixed(2);
+}
+
+function confirmPurchase() {
+    var qty = parseFloat(document.getElementById('qty-input').value);
+    if (!qty || qty <= 0) { showToast('Invalid quantity', 'error'); return; }
+    
+    var btn = document.getElementById('confirm-purchase-btn');
+    btn.disabled = true;
+    btn.textContent = 'Processing...';
+
+    fetch('/api/purchase', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({product_id: currentProductId, quantity: qty})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            closeBuyModal();
+            showToast('Order placed successfully!');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showToast(data.message, 'error');
+            btn.disabled = false;
+            btn.textContent = 'Confirm Order';
+        }
+    });
+}
+
+function showToast(msg, type='success') {
+    var container = document.getElementById('toast-container');
+    var toast = document.createElement('div');
+    toast.className = 'toast' + (type === 'error' ? ' toast-error' : '');
+    toast.textContent = (type === 'error' ? '❌' : '✅') + ' ' + msg;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+function overlayClose(event, id) {
+    if (event.target === event.currentTarget) document.getElementById(id).classList.remove('open');
+}
 </script>
 {% endblock %}

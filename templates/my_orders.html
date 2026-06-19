@@ -1,0 +1,79 @@
+{% extends "layout.html" %}
+{% block title %}My Orders | Grow Fasal{% endblock %}
+{% block page_title %}📦 My Orders{% endblock %}
+
+{% block content %}
+
+<!-- Summary Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Total Orders</div>
+        <div class="stat-value" style="color:var(--green-700);">{{ orders|length }}</div>
+        <div class="stat-trend trend-up">Across All Purchases</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Total Spent</div>
+        <div class="stat-value" style="color:var(--amber-600);">₹{{ '{:,.2f}'.format(total_spent) }}</div>
+        <div class="stat-trend" style="color:var(--amber-600);">Farm-Fresh Produce</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Delivered</div>
+        <div class="stat-value" style="color:var(--green-600);">
+            {{ orders | selectattr('status', 'equalto', 'DELIVERED') | list | length }}
+        </div>
+        <div class="stat-trend trend-up">✅ Successfully Received</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">In Transit</div>
+        <div class="stat-value" style="color:var(--blue-600);">
+            {{ orders | selectattr('status', 'equalto', 'SHIPPED') | list | length }}
+        </div>
+        <div class="stat-trend" style="color:var(--blue-600);">🚚 On the Way</div>
+    </div>
+</div>
+
+<!-- Orders List -->
+{% if orders %}
+<div style="display:flex; flex-direction:column; gap:1rem;">
+    {% for order in orders %}
+    {% set status_color = {'CONFIRMED': '#1e40af', 'SHIPPED': '#92400e', 'DELIVERED': '#166534', 'PENDING': '#475569'} %}
+    <div class="order-card">
+        <div class="order-icon">
+            {% set crop_emojis = {
+                'Rice': '🌾', 'Wheat': '🌿', 'Maize': '🌽', 'Cotton': '🌸',
+                'Sugarcane': '🎋', 'Onion': '🧅', 'Potato': '🥔', 'Tomato': '🍅',
+                'Soybean': '🫘', 'Chickpea': '🫛', 'Mango': '🥭', 'Banana': '🍌'
+            } %}
+            {{ crop_emojis.get(order.product_name, '🌱') }}
+        </div>
+        <div class="order-info">
+            <div class="order-name">{{ order.product_name }}</div>
+            <div class="order-meta">
+                👨‍🌾 {{ order.farmer_name }} · {{ order.farmer_state }} &nbsp;|&nbsp;
+                📦 {{ order.quantity | int }} kg &nbsp;|&nbsp;
+                <span class="badge badge-grade-{{ order.quality_grade }}">Grade {{ order.quality_grade }}</span>
+            </div>
+            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:.35rem;">
+                Order #{{ order.id }} · {{ order.created_at }}
+            </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+            <div class="order-price">₹{{ '{:,.2f}'.format(order.total_price) }}</div>
+            <span class="badge status-{{ order.status }}" style="margin-top:.4rem;display:inline-block;">
+                {% if order.status == 'CONFIRMED' %}🔵{% elif order.status == 'SHIPPED' %}🚚{% elif order.status == 'DELIVERED' %}✅{% else %}⏳{% endif %}
+                {{ order.status }}
+            </span>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <span class="emoji">🛒</span>
+    <h3>No orders yet</h3>
+    <p>Head over to the Marketplace to buy fresh produce directly from verified farmers.</p>
+    <a href="{{ url_for('marketplace') }}" class="btn btn-primary btn-lg" style="margin-top:1.5rem;">Browse Marketplace</a>
+</div>
+{% endif %}
+
+{% endblock %}

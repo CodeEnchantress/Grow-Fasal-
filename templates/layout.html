@@ -13,31 +13,54 @@
 <body>
     <aside class="sidebar">
         <div class="logo">
-            <span style="font-weight: 800; letter-spacing: -0.5px;">GROW FASAL</span>
+            <span>GROW FASAL</span>
         </div>
         <nav class="nav-menu">
             <a href="{{ url_for('index') }}" class="nav-item {% if request.path == url_for('index') %}active{% endif %}">
-                <span>Home</span>
+                <span>🏠 Home</span>
             </a>
             {% if current_user.is_authenticated %}
                 <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.path == url_for('dashboard') %}active{% endif %}">
-                    <span>Dashboard</span>
+                    <span>📊 Dashboard</span>
                 </a>
+                <a href="{{ url_for('marketplace') }}" class="nav-item {% if request.path == url_for('marketplace') %}active{% endif %}">
+                    <span>🛒 Marketplace</span>
+                </a>
+                <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 0.75rem 0;"></div>
+                
                 {% if current_user.role == 'FARMER' %}
-                    <a href="{{ url_for('my_crops') }}" class="nav-item {% if request.path == url_for('my_crops') %}active{% endif %}"><span>My Crops</span></a>
-                    <a href="{{ url_for('weather') }}" class="nav-item {% if request.path == url_for('weather') %}active{% endif %}"><span>Weather Insights</span></a>
-                    <a href="{{ url_for('mandi_trends') }}" class="nav-item {% if request.path == url_for('mandi_trends') %}active{% endif %}"><span>Mandi Trends</span></a>
+                    <a href="{{ url_for('my_crops') }}" class="nav-item {% if request.path == url_for('my_crops') %}active{% endif %}">
+                        <span>🌱 My Production</span>
+                    </a>
+                    <a href="{{ url_for('weather') }}" class="nav-item {% if request.path == url_for('weather') %}active{% endif %}">
+                        <span>⛅ weather Monitor</span>
+                    </a>
+                    <a href="{{ url_for('mandi_trends') }}" class="nav-item {% if request.path == url_for('mandi_trends') %}active{% endif %}">
+                        <span>📈 Market Trends</span>
+                    </a>
                 {% else %}
-                    <a href="{{ url_for('dashboard') }}#marketplace" class="nav-item"><span>Marketplace</span></a>
-                    <a href="{{ url_for('dashboard') }}#my-orders" class="nav-item"><span>My Orders</span></a>
+                    <a href="{{ url_for('my_orders') }}" class="nav-item {% if request.path == url_for('my_orders') %}active{% endif %}">
+                        <span>📦 My Purchases</span>
+                    </a>
                 {% endif %}
+            {% else %}
+                <a href="{{ url_for('marketplace') }}" class="nav-item {% if request.path == url_for('marketplace') %}active{% endif %}">
+                    <span>🛒 Marketplace</span>
+                </a>
             {% endif %}
         </nav>
         <div class="sidebar-footer">
             {% if current_user.is_authenticated %}
-                <a href="{{ url_for('logout') }}" class="nav-item" style="color: #fca5a5;"><span>Logout</span></a>
+                <div style="padding: .75rem 1rem; font-size:.8rem; color:rgba(255,255,255,.6); margin-bottom:.5rem;">
+                    {{ current_user.name }}<br>
+                    <span style="font-size:.7rem; opacity:.7;">{{ current_user.role }}</span>
+                </div>
+                <a href="{{ url_for('logout') }}" class="nav-item" style="color: #fca5a5;">
+                    <span>🚪 Logout</span>
+                </a>
             {% else %}
-                <a href="{{ url_for('login') }}" class="nav-item"><span>Login</span></a>
+                <a href="{{ url_for('login') }}" class="nav-item"><span>🔑 Login</span></a>
+                <a href="{{ url_for('register') }}" class="nav-item"><span>📝 Register</span></a>
             {% endif %}
         </div>
     </aside>

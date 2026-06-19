@@ -44,5 +44,13 @@ next-env.d.ts
 __pycache__/
 *.py[cod]
 *$py.class
+venv/
+.env
+.venv
+env/
 instance/
 *.db
+.sqlite
+.pytest_cache/
+.coverage
+htmlcov/

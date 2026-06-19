@@ -7,7 +7,6 @@ numpy
 scikit-learn
 xgboost
 prophet
-tensorflow
 joblib
 plotly
 python-dotenv
